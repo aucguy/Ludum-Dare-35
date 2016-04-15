@@ -1,0 +1,24 @@
+{
+  "name": "Ludum-Dare-33",
+  "version": "1.0.0",
+  "description": "Ludum Dare 33 Entry",
+  "main": "index.html",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aucguy/Ludum-Dare-35.git"
+  },
+  "keywords": [
+    "game",
+    "LudumDare"
+  ],
+  "author": "aucguy",
+  "license": "MIT",
+  "licenseUrl": "https://opensource.org/licenses/mit-license.php",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-concat": "^1.0.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-uglify": "^1.0.1",
+    "grunt-subgrunt": "^1.2.0"
+  }
+}
