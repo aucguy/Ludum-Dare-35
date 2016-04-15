@@ -1,0 +1,6 @@
+[submodule "lib/basejs"]
+	path = lib/basejs
+	url = https://github.com/aucguy/basejs.git
+[submodule "lib/javascript-state-machine"]
+	path = lib/javascript-state-machine
+	url = https://github.com/aucguy/javascript-state-machine.git
