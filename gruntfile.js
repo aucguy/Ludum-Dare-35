@@ -2,7 +2,7 @@ module.exports = function(grunt) {
   grunt.initConfig({
     subgrunt: {
       lib: {
-        'lib/basejs': 'build',
+        'lib/basejs': ['build', '--injectors=phaser'],
         'lib/canvg': 'build',
         'lib/javascript-state-machine': 'build',
         'lib/phaser': 'build'
@@ -45,8 +45,8 @@ module.exports = function(grunt) {
         }
       },
       assets: {
-          src: 'assets/',
-          dest: 'build/release/assets/'
+          src: 'assets/**',
+          dest: 'build/release/'
         },
     },
     preprocess: {
