@@ -192,6 +192,11 @@ base.registerModule('util', function() {
     return Phaser.Point.rotate(new Phaser.Point(1, 0), 0, 0, angle).normalize();
   }
 
+  function centerSprite(sprite) {
+    sprite.anchor.x = 0.5;
+    sprite.anchor.y = 0.5;
+  }
+
   init();
 
   return {
@@ -206,6 +211,7 @@ base.registerModule('util', function() {
     getTextureFromCache: getTextureFromCache,
     createBitmap: createBitmap,
     clearBitmapCache: clearBitmapCache,
-    normalWithAngle: normalWithAngle
+    normalWithAngle: normalWithAngle,
+    centerSprite: centerSprite
   };
 });

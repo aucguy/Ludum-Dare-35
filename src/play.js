@@ -26,14 +26,21 @@ base.registerModule('play', function() {
   /**
    * creates the placements of things on the screen
    */
-  function makePlacements(width, height) {
+  function makePlacements(game, width, height) {
+    var pieceSize = 0.5 * game.cache.getCanvas('piece-triangle-green').width;
+    var goalMargin = 0.2 * pieceSize;
     var places = {
       //place to spawn pieces for left queue
       leftSpawn: [-50, -50], //topleft corner
       //where the pieces in the queue go to join
       queueTarget: [width / 2, height / 2], //screen center
       //center of the rings
-      ringCenter: [width / 2, height / 2] //screen center
+      ringCenter: [width / 2, height / 2], //screen center
+      //goal positions
+      goalTriangle: [width / 2, goalMargin + pieceSize],
+      goalSquare: [width - pieceSize - goalMargin, height / 2],
+      goalCircle: [width / 2, height - pieceSize - goalMargin],
+      goalPentagon: [goalMargin + pieceSize, height / 2]
     }
     var names = Object.getOwnPropertyNames(places);
     var ret = {}
@@ -53,15 +60,15 @@ base.registerModule('play', function() {
     constructor: function PlayGame(game) {
       this.constructor$Group(game);
       //what goes where
-      this.placements = makePlacements(game.scale.width, game.scale.height);
+      this.placements = makePlacements(game, game.scale.width, game.scale.height);
       //speed at which to send pieces
       this.speed = 5000;
 
       this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
       this.queueRight = null; //line of shapes on the right
-      this.goals = null; //shapes to specify what goes where
-      this.health = new Ring(game, this, 100, 5, '#000000'); //ring for a timer and health
-      this.add(this.health);
+      this.goals = new GoalGroup(game, this); //shapes to specify what goes where
+      this.ring = new Ring(game, this, 100, 5, '#000000'); //ring for health
+      this.add(this.ring);
     },
     /**
      * send shapes to their destination
@@ -115,78 +122,13 @@ base.registerModule('play', function() {
     }
   });
 
-  /**
-   * place where the shapes are supposed to go
-   */
-  var Goal = util.extend(Phaser.Sprite, 'Goal', {
-    constructor: function Goal() {
-      this.onRightShape = null; //signal fired when right shape recieved
-      this.onWrongShape = null; //signal fired when wrong shape recieved
-      this.leftKey = null; //key to press to send a shape from the left queue
-      this.rightKey = null; //key to pressed to send a shape from the right queue
-    }
-  });
-
-  var Score = util.extend(Phaser.Group, 'Score', {
-    constructor: function Score() {
-      this.timer = null; //right for time
-      this.health = null; //ring for health
-    }
-  });
-
-  var Ring = util.extend(Phaser.Sprite, 'Ring', {
-    constructor: function Ring(game, parent, radius, thickness, color) {
-      var outer = radius + thickness;
-      this.bitmap = util.createBitmap(game, 2 * outer, 2 * outer);
-      this.constructor$Sprite(game, parent.placements.ringCenter.x,
-          parent.placements.ringCenter.y, this.bitmap);
-      this.anchor.x = 0.5;
-      this.anchor.y = 0.5;
-      this.radius = radius;
-      this.thickness = thickness;
-      this.color = color;
-    },
-    update: function update() {
-      var context = this.bitmap.context;
-      var angle = this.game.math.degToRad(360);
-
-      context.fillStyle = this.color;
-      context.strokeStyle = this.color;
-
-      context.beginPath();
-      context.arc(this.center().x, this.center().y, this.radius, 0, angle);
-
-      var end = this.getEndPoint(angle);
-      context.lineTo(end.x, end.y);
-
-      context.arc(this.center().x, this.center().y, this.totalRadius(), angle, 0, true);
-      context.closePath();
-
-      context.fill();
-      context.stroke();
-      context.restore();
-    },
-    getEndPoint: function getEndPoint(angle) {
-      var tmp = util.normalWithAngle(angle);
-      tmp = Phaser.Point.multiply(tmp, new Phaser.Point(this.totalRadius(), this.totalRadius()));
-      tmp.add(this.center().x, this.center().y);
-      return tmp;
-    },
-    center: function center() {
-      return new Phaser.Point(this.bitmap.canvas.width / 2,
-          this.bitmap.canvas.height / 2);
-    },
-    totalRadius: function totalRadius() {
-      return this.radius + this.thickness;
-    }
-  });
-
   var Piece = util.extend(Phaser.Sprite, 'Piece', {
     constructor: function Piece(game, x, y, shape, color) {
       var texture = util.getTextureFromCache(game, Piece.getTextureName(shape, color));
       this.constructor$Sprite(game, x, y, texture);
       this.shape = shape;
       this.color = color;
+      util.centerSprite(this);
     }
   });
   Piece.randomPiece = function randomPiece(game, x, y) {
@@ -227,6 +169,96 @@ base.registerModule('play', function() {
   Color.randomColor = function randomColor() {
     return rand.pick(Color.colors)
   }
+
+  /**
+   * group for goals
+   */
+  var GoalGroup = util.extend(Phaser.Group, 'GoalGroup', {
+    constructor: function GoalGroup(game, parent) {
+      this.constructor$Group(game, parent);
+      this.parent = parent;
+      for(var i=0; i<Shape.shapes.length; i++) {
+        var shape = Shape.shapes[i];
+        var goal = new Goal(game, this, shape);
+        this.add(goal);
+      }
+    }
+  });
+
+  /**
+   * place where the shapes are supposed to go
+   */
+  var Goal = util.extend(Phaser.Sprite, 'Goal', {
+    constructor: function Goal(game, parent, shape) {
+      var texture = util.getTextureFromCache(game, Goal.getTextureName(shape));
+      this.parent = parent;
+      this.shape = shape; //target shape
+      var pos = this.goalPlacement();
+      this.constructor$Sprite(game, pos.x, pos.y, texture);
+      this.onRightShape = null; //signal fired when right shape recieved
+      this.onWrongShape = null; //signal fired when wrong shape recieved
+      this.leftKey = null; //key to press to send a shape from the left queue
+      this.rightKey = null; //key to pressed to send a shape from the right queue
+      util.centerSprite(this);
+    },
+    goalPlacement: function goalPlacement() {
+      var name = this.shape.name;
+      var placements = this.parent.parent.placements;
+      if(name == 'triangle') return placements.goalTriangle;
+      if(name == 'square') return placements.goalSquare;
+      if(name == 'circle') return placements.goalCircle;
+      if(name == 'pentagon') return placements.goalPentagon;
+    }
+  });
+  Goal.getTextureName = function getTextureName(shape) {
+    return Piece.getTextureName(shape, Color.randomColor());
+  };
+
+  var Ring = util.extend(Phaser.Sprite, 'Ring', {
+    constructor: function Ring(game, parent, radius, thickness, color) {
+      var outer = radius + thickness;
+      this.bitmap = util.createBitmap(game, 2 * outer, 2 * outer);
+      this.constructor$Sprite(game, parent.placements.ringCenter.x,
+          parent.placements.ringCenter.y, this.bitmap);
+      util.centerSprite(this);
+      this.radius = radius;
+      this.thickness = thickness;
+      this.color = color;
+    },
+    update: function update() {
+      var context = this.bitmap.context;
+      var angle = this.game.math.degToRad(360);
+
+      context.fillStyle = this.color;
+      context.strokeStyle = this.color;
+
+      context.beginPath();
+      context.arc(this.center().x, this.center().y, this.radius, 0, angle);
+
+      var end = this.getEndPoint(angle);
+      context.lineTo(end.x, end.y);
+
+      context.arc(this.center().x, this.center().y, this.totalRadius(), angle, 0, true);
+      context.closePath();
+
+      context.fill();
+      context.stroke();
+      context.restore();
+    },
+    getEndPoint: function getEndPoint(angle) {
+      var tmp = util.normalWithAngle(angle);
+      tmp = Phaser.Point.multiply(tmp, new Phaser.Point(this.totalRadius(), this.totalRadius()));
+      tmp.add(this.center().x, this.center().y);
+      return tmp;
+    },
+    center: function center() {
+      return new Phaser.Point(this.bitmap.canvas.width / 2,
+          this.bitmap.canvas.height / 2);
+    },
+    totalRadius: function totalRadius() {
+      return this.radius + this.thickness;
+    }
+  });
 
   return {
     PlayState: PlayState,
