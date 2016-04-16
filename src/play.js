@@ -1,7 +1,7 @@
 base.registerModule('play', function() {
   var util = base.importModule('util');
 
-  var PIECES_IN_QUEUE = 10;
+  var PIECES_IN_QUEUE = 5;
   var rand = new Phaser.RandomDataGenerator();
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
@@ -20,12 +20,38 @@ base.registerModule('play', function() {
   });
 
   /**
+   * creates the placements of things on the screen
+   */
+  function makePlacements(width, height) {
+    var places = {
+      //place to spawn pieces for left queue
+      leftSpawn: [-50, -50], //topleft corner
+      //where the pieces in the queue go to join
+      queueTarget: [width / 2, height / 2], //screen center
+    }
+    var names = Object.getOwnPropertyNames(places);
+    var ret = {}
+    for(var i=0; i<names.length; i++) {
+      var name = names[i];
+      var coord = places[name];
+      var point = new Phaser.Point(coord[0], coord[1]);
+      ret[name] = point;
+    }
+    return ret;
+  }
+
+  /**
    * the play area
    */
   var PlayGame = util.extend(Phaser.Group, 'PlayGame', {
     constructor: function PlayGame(game) {
       this.constructor$Group(game);
-      this.queueLeft = new PieceQueue(game, this, 1); //line of shapes on the left
+      //what goes where
+      this.placements = makePlacements(game.scale.width, game.scale.height);
+      //speed at which to send pieces
+      this.speed = 5000;
+
+      this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
       this.queueRight = null; //line of shapes on the right
       this.goals = null; //shapes to specify what goes where
       this.score = null; //ring for a timer and health
@@ -37,16 +63,41 @@ base.registerModule('play', function() {
     },
   });
 
+  var Side = {
+    Left: 0,
+    Right: 1
+  }
+
   /**
    * holds shapes that will be played
    */
   var PieceQueue = util.extend(Phaser.Group, 'PieceQueue', {
     constructor: function PieceQueue(game, parent, side) {
       this.constructor$Group(game, parent);
+      this.parent = parent; //parent spite (PlayGame)
       this.side = side; //which way the queue is facing
+      this.onAddPiece = new Phaser.Signal(); //when piece added
       this.onTake = new Phaser.Signal(); //signal fired when a shape is taken
-      for(var i=0; i<PIECES_IN_QUEUE; i++) {
-        this.add(Piece.randomPiece(game));
+
+      this.onAddPiece.add(this.doAddPiece.bind(this));
+      this.onAddPiece.dispatch();
+    },
+    doAddPiece: function doAddPiece() {
+      var piece = Piece.randomPiece(this.game, this.getSpawn().x, this.getSpawn().y);
+      var tween = this.game.add.tween(piece);
+      tween.to({
+        x: this.parent.placements.queueTarget.x,
+        y: this.parent.placements.queueTarget.y
+      }, this.parent.speed);
+      tween.start();
+      this.add(piece);
+      this.game.time.events.add(this.parent.speed / PIECES_IN_QUEUE,
+          this.onAddPiece.dispatch, this.onAddPiece);
+    },
+    getSpawn: function getSpawn() {
+      switch(this.side) {
+        case Side.Left: return this.parent.placements.leftSpawn;
+        case Side.Right: return this.parent.placements.rightSpawn;
       }
     },
     /**
@@ -82,15 +133,15 @@ base.registerModule('play', function() {
   });
 
   var Piece = util.extend(Phaser.Sprite, 'Piece', {
-    constructor: function Piece(game, shape, color) {
+    constructor: function Piece(game, x, y, shape, color) {
       var texture = util.getTextureFromCache(game, Piece.getTextureName(shape, color));
-      this.constructor$Sprite(game, 200, 200, texture);
+      this.constructor$Sprite(game, x, y, texture);
       this.shape = shape;
       this.color = color;
     }
   });
-  Piece.randomPiece = function randomPiece(game) {
-    return new Piece(game, Shape.randomShape(), Color.randomColor());
+  Piece.randomPiece = function randomPiece(game, x, y) {
+    return new Piece(game, x, y, Shape.randomShape(), Color.randomColor());
   };
   Piece.getTextureName = function getTextureName(shape, color) {
     return 'piece-' + shape.name + '-' + color.name;
