@@ -72,31 +72,6 @@ base.registerModule('util', function() {
     return base.importModule('main').Main.instance;
   }
 
-  function collideTilemapLayer(sprite, layer) {
-    //get local sprite bounds
-    var globalTopleft = sprite.world;
-    console.log(globalTopleft.y + ", " + sprite.world.y);
-    var globalBottomright = sprite.toGlobal(new Phaser.Point(sprite.width, sprite.height));
-    var localTopleft = layer.toLocal(globalTopleft);
-    var localBottomright = layer.toLocal(globalBottomright);
-    var width = localBottomright.x - localTopleft.x;
-    var height = localBottomright.y - localTopleft.y;
-
-    if(globalTopleft.y > layer.map.heightInPixels) {
-      console.log('stop...');
-    }
-
-    //process tiles
-    var tiles = layer.getTiles(globalTopleft.left, globalTopleft.top, width, height, true, false);
-    var tileSprite = getGame().make.sprite(0, 0, null);
-    getGame().physics.arcade.enable(tileSprite);
-
-    for(var i=0; i<tiles.length; i++) {
-      var tile = tiles[i];
-      //tileSprite.position.x;
-    }
-  }
-
   var StateContainer = extend(Phaser.State, 'StateContainer', {
       constructor: function MenuContainer(main, name) {
         this.constructor$State(main, name);
@@ -127,15 +102,88 @@ base.registerModule('util', function() {
    */
   function NOP() {}
 
+  function ret(x) {
+    return function() {
+      return x;
+    };
+  }
+
+  /**
+   * sets the texture of a sprite from a canvas
+   */
+  function getTextureFromCache(game, key) {
+    return PIXI.Texture.fromCanvas(game.cache.getCanvas(key));
+  }
+
+  var Map = extend(Object, 'Map', {
+    constructor: function Map() {
+      this.entries = [];
+    },
+    entry: function entry(key, make) {
+      for(var i=0; i<this.entries.length; i++) {
+        if(this.entries[i].key == key) {
+          return this.entries[i];
+        }
+      }
+      if(make) {
+        var entry = {
+          key: key,
+          value: null
+        }
+        this.entries.push(entry);
+        return entry;
+      }
+      return null;
+    },
+    get: function get(key) {
+      var entry = this.entry(key, false);
+      return entry ? entry.value : entry;
+    },
+    put: function put(key, value) {
+      this.entry(key, true).value = value;
+    },
+    contains: function contains(key) {
+      return this.entry(key, false) != null;
+    }
+  });
+
+  function addGenImg(cache, key, svg, data) {
+    var svg = xmlParser.parseFromString(base.getAsset(svg), 'text/xml');
+    var target = createCanvas(svg.width, svg.height);
+
+    var names = Object.getOwnPropertyNames(data);
+    for(var i=0; i<names.length; i++) {
+      var name = names[i];
+      var value = data[name];
+      var parts = name.split('.');
+
+      var obj = svg.getElementById(parts[0]);
+      if(obj == null) continue
+
+      for(var k=1; k<parts.length-1; k++) {
+        obj = obj[parts[k]];
+        if(obj == null) break;
+      }
+      if(obj == null) continue;
+      obj[parts[parts.length-1]] = value;
+    }
+    canvg(target, svg);
+    cache.addCanvas(key, target);
+  }
+
+  var xmlParser = new DOMParser();
+
   init();
 
   return {
     extend: extend,
     createCanvas: createCanvas,
-    xmlParser: new DOMParser(),
+    xmlParser: xmlParser,
     getGame: getGame,
-    collideTilemapLayer: collideTilemapLayer,
     StateContainer: StateContainer,
-    NOP: NOP
+    NOP: NOP,
+    ret: ret,
+    addGenImg: addGenImg,
+    getTextureFromCache: getTextureFromCache
   };
 });

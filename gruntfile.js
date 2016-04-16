@@ -5,7 +5,7 @@ module.exports = function(grunt) {
         'lib/basejs': ['build', '--injectors=phaser'],
         'lib/canvg': 'build',
         'lib/javascript-state-machine': 'build',
-        'lib/phaser': 'build'
+        'lib/phaser': 'full'
       }
     },
     concat: {
