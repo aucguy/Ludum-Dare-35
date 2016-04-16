@@ -15,7 +15,11 @@ base.registerModule('play', function() {
     },
 
     update: function update() {
-      this.playGame.update();
+      //this.playGame.update();
+    },
+
+    shutdown: function shutdown() {
+      util.clearBitmapCache();
     }
   });
 
@@ -28,6 +32,8 @@ base.registerModule('play', function() {
       leftSpawn: [-50, -50], //topleft corner
       //where the pieces in the queue go to join
       queueTarget: [width / 2, height / 2], //screen center
+      //center of the rings
+      ringCenter: [width / 2, height / 2] //screen center
     }
     var names = Object.getOwnPropertyNames(places);
     var ret = {}
@@ -54,7 +60,8 @@ base.registerModule('play', function() {
       this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
       this.queueRight = null; //line of shapes on the right
       this.goals = null; //shapes to specify what goes where
-      this.score = null; //ring for a timer and health
+      this.health = new Ring(game, this, 100, 20, '#000000'); //ring for a timer and health
+      this.add(this.health);
     },
     /**
      * send shapes to their destination
@@ -128,7 +135,48 @@ base.registerModule('play', function() {
   });
 
   var Ring = util.extend(Phaser.Sprite, 'Ring', {
-    constructor: function(scale, color) {
+    constructor: function Ring(game, parent, radius, thickness, color) {
+      var outer = radius + thickness;
+      this.bitmap = util.createBitmap(game, 2 * outer, 2 * outer);
+      this.constructor$Sprite(game, parent.placements.ringCenter.x,
+          parent.placements.ringCenter.y, this.bitmap);
+      this.anchor.x = 0.5;
+      this.anchor.y = 0.5;
+      this.radius = radius;
+      this.thickness = thickness;
+      this.color = color;
+    },
+    update: function update() {
+      var centerx = this.bitmap.canvas.width / 2;
+      var centery = this.bitmap.canvas.height / 2;
+      var context = this.bitmap.context;
+      var angle = this.game.math.degToRad(90);
+      var total = this.radius + this.thickness;
+
+      context.fillStyle = this.color;
+      context.strokeStyle = this.color;
+
+      context.beginPath();
+      context.arc(centerx, centery, this.radius, 0, angle);
+
+      var end = this.getEndPoint(angle);
+      context.lineTo(end.x, end.y);
+
+      context.arc(centerx, centery, total, angle, 0, true);
+      context.closePath();
+
+      context.fill();
+      context.stroke();
+      context.restore();
+    },
+    getEndPoint: function getEndPoint(angle) {
+      var centerx = this.bitmap.canvas.width / 2;
+      var centery = this.bitmap.canvas.height / 2;
+      var total = this.radius + this.thickness;
+      var tmp = util.normalWithAngle(angle);
+      tmp = Phaser.Point.multiply(tmp, new Phaser.Point(total, total));
+      tmp.add(centerx, centery);
+      return tmp;
     }
   });
 

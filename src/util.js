@@ -173,6 +173,25 @@ base.registerModule('util', function() {
 
   var xmlParser = new DOMParser();
 
+  var bitmapCache = [];
+
+  function createBitmap(game, width, height) {
+    var bitmap = game.make.bitmapData(width, height);
+    bitmapCache.push(bitmap);
+    return bitmap;
+  }
+
+  function clearBitmapCache() {
+    for(var i=0; i<bitmapCache.length; i++) {
+      bitmapCache[i].destroy();
+    }
+    bitmapCache = [];
+  }
+
+  function normalWithAngle(angle) {
+    return Phaser.Point.rotate(new Phaser.Point(1, 0), 0, 0, angle).normalize();
+  }
+
   init();
 
   return {
@@ -184,6 +203,9 @@ base.registerModule('util', function() {
     NOP: NOP,
     ret: ret,
     addGenImg: addGenImg,
-    getTextureFromCache: getTextureFromCache
+    getTextureFromCache: getTextureFromCache,
+    createBitmap: createBitmap,
+    clearBitmapCache: clearBitmapCache,
+    normalWithAngle: normalWithAngle
   };
 });
