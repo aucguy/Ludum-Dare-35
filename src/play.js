@@ -60,7 +60,7 @@ base.registerModule('play', function() {
       this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
       this.queueRight = null; //line of shapes on the right
       this.goals = null; //shapes to specify what goes where
-      this.health = new Ring(game, this, 100, 20, '#000000'); //ring for a timer and health
+      this.health = new Ring(game, this, 100, 5, '#000000'); //ring for a timer and health
       this.add(this.health);
     },
     /**
@@ -147,22 +147,19 @@ base.registerModule('play', function() {
       this.color = color;
     },
     update: function update() {
-      var centerx = this.bitmap.canvas.width / 2;
-      var centery = this.bitmap.canvas.height / 2;
       var context = this.bitmap.context;
-      var angle = this.game.math.degToRad(90);
-      var total = this.radius + this.thickness;
+      var angle = this.game.math.degToRad(360);
 
       context.fillStyle = this.color;
       context.strokeStyle = this.color;
 
       context.beginPath();
-      context.arc(centerx, centery, this.radius, 0, angle);
+      context.arc(this.center().x, this.center().y, this.radius, 0, angle);
 
       var end = this.getEndPoint(angle);
       context.lineTo(end.x, end.y);
 
-      context.arc(centerx, centery, total, angle, 0, true);
+      context.arc(this.center().x, this.center().y, this.totalRadius(), angle, 0, true);
       context.closePath();
 
       context.fill();
@@ -170,13 +167,17 @@ base.registerModule('play', function() {
       context.restore();
     },
     getEndPoint: function getEndPoint(angle) {
-      var centerx = this.bitmap.canvas.width / 2;
-      var centery = this.bitmap.canvas.height / 2;
-      var total = this.radius + this.thickness;
       var tmp = util.normalWithAngle(angle);
-      tmp = Phaser.Point.multiply(tmp, new Phaser.Point(total, total));
-      tmp.add(centerx, centery);
+      tmp = Phaser.Point.multiply(tmp, new Phaser.Point(this.totalRadius(), this.totalRadius()));
+      tmp.add(this.center().x, this.center().y);
       return tmp;
+    },
+    center: function center() {
+      return new Phaser.Point(this.bitmap.canvas.width / 2,
+          this.bitmap.canvas.height / 2);
+    },
+    totalRadius: function totalRadius() {
+      return this.radius + this.thickness;
     }
   });
 
