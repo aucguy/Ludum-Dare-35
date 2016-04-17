@@ -25,8 +25,8 @@ base.registerModule('main', function() {
 
     getPhaserConfig: function getPhaserConfig() {
       return {
-        width: 640,
-        height: 480,
+        width: 600,
+        height: 400,
         canvasID: 'display',
         parent: 'gameContainer',
         renderer: Phaser.AUTO,
