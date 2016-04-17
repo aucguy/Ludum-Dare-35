@@ -2,12 +2,11 @@ base.registerModule('play', function() {
   var util = base.importModule('util');
   var menu = base.importModule('menu');
 
-  var PIECES_IN_QUEUE = 5;
   var RING_FUZZ = 10;
-  var MOVE_ZONE = 5;
+  var MOVE_ZONE = 2;
   var QUEUE_SPEED = 5000; //rate at which pieces are spawned
   var MISS_DAMAGE = 5;
-  var RECOVER_SPEED = 0.5 * 2 * MISS_DAMAGE / (QUEUE_SPEED / PIECES_IN_QUEUE); //rate at which health is regained
+  var RECOVER_SPEED = 0.5 * 2 * MISS_DAMAGE / QUEUE_SPEED; //rate at which health is regained
   var rand = new Phaser.RandomDataGenerator();
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
@@ -122,7 +121,7 @@ base.registerModule('play', function() {
       }, this.parent.speed);
       tween.start();
       this.add(piece);
-      this.game.time.events.add(this.parent.speed / PIECES_IN_QUEUE,
+      this.game.time.events.add(this.parent.speed,
           this.onAddPiece.dispatch, this.onAddPiece);
     },
     getSpawn: function getSpawn() {
