@@ -3,6 +3,7 @@ base.registerModule('play', function() {
 
   var PIECES_IN_QUEUE = 5;
   var RING_FUZZ = 10;
+  var MOVE_ZONE = 5;
   var rand = new Phaser.RandomDataGenerator();
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
@@ -170,6 +171,7 @@ base.registerModule('play', function() {
       this.shape = shape;
       this.color = color;
       this.arrow = null;
+      this.redirected = false;
       util.centerSprite(this);
     },
     update: function update() {
@@ -178,6 +180,15 @@ base.registerModule('play', function() {
       var dist = this.position.distance(ring.position);
       if(ring.radius + RING_FUZZ < dist && dist < ring.totalRadius() + RING_FUZZ) {
         this.parent.tryBindArrow(this);
+      } else if(dist < MOVE_ZONE && this.arrow && !this.redirected) {
+        var tween = this.game.add.tween(this);
+        var pos = this.parent.parent.goals.getGoal(this.arrow.direction)
+        tween.to({
+          x: pos.x,
+          y: pos.y
+        }, this.parent.speed);
+        tween.start();
+        this.redirected = true;
       }
     }
   });
@@ -192,14 +203,15 @@ base.registerModule('play', function() {
     constructor: function Shape(name, texture) {
       this.name = name;
       this.texture = texture;
+      Shape.shapes.push(this);
     }
   });
-  Shape.shapes = [
-    new Shape('triangle', 'images/triangle'),
-    new Shape('square', 'images/square'),
-    new Shape('circle', 'images/circle'),
-    new Shape('pentagon', 'images/pentagon')
-  ];
+  Shape.shapes = [];
+  Shape.triangle = new Shape('triangle', 'images/triangle');
+  Shape.square = new Shape('square', 'images/square');
+  Shape.circle = new Shape('circle', 'images/circle');
+  Shape.pentagon = new Shape('pentagon', 'images/pentagon');
+
   Shape.randomShape = function randomShape() {
     return rand.pick(Shape.shapes);
   }
@@ -232,6 +244,21 @@ base.registerModule('play', function() {
         var goal = new Goal(game, this, shape);
         this.add(goal);
       }
+    },
+    getGoal: function getGoal(direction) {
+      var shape;
+      switch(direction) {
+        case Direction.up: shape = Shape.triangle; break;
+        case Direction.right: shape = Shape.square;  break;
+        case Direction.down: shape = Shape.circle; break;
+        case Direction.left: shape = Shape.pentagon; break;
+      }
+      for(var i=0; i<this.children.length; i++) {
+        var child = this.children[i];
+        if(child instanceof Goal && child.shape == shape)
+          return child;
+      }
+      return null;
     }
   });
 
