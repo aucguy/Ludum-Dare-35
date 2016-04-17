@@ -87,7 +87,7 @@ base.registerModule('gui', function() {
     constructor: function GuiContext(menu) {
       this.menu = menu;
     },
-    changeState: function changeState(newState) {
+    actionChangeState: function actionChangeState(newState) {
       this.menu.game.state.start(newState);
     },
     fade: function fadeOut(isOut, isUp, newState) {
@@ -100,7 +100,9 @@ base.registerModule('gui', function() {
         alpha: out ? 0 : 1
       }, FADE_TIME);
       this.menu.sprite.position.y -= out ? 0 : direction * FADE_MOVE;
-      tween.onComplete.add(this.changeState.bind(this, newState));
+      if(out) {
+        tween.onComplete.add(this.actionChangeState.bind(this, newState));
+      }
       tween.start();
     }
   });

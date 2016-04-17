@@ -13,6 +13,7 @@ base.registerModule('menu', function() {
           'Score: ' + this.score;
       this.canvg.draw();
       this.context.fade('in', 'down', 'play');
+      this.game.playSound('lose');
     }
   });
   LoseMenu.instance = null;

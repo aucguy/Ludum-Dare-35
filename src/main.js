@@ -21,6 +21,8 @@ base.registerModule('main', function() {
       var display = document.getElementById('display');
       display.parentElement.removeChild(display);
       this.constructor$Game(this.getPhaserConfig());
+      this.sounds = null;
+      this.soundsReady = false;
     },
 
     getPhaserConfig: function getPhaserConfig() {
@@ -40,6 +42,9 @@ base.registerModule('main', function() {
       this.state.add('loseMenu', menu.LoseMenu.instance);
       this.state.add('playState', new play.PlayState());
       this.state.start('boot');
+    },
+    playSound: function playSound(name) {
+      if(this.soundsReady) this.sounds[name].play();
     }
   });
   Main.instance = null;
@@ -50,16 +55,30 @@ base.registerModule('main', function() {
   var BootState = util.extend(Phaser.State, 'BootState', {
     preload: function preload() {
       phaserInjector.injectIntoPhaser(this.game.load);
-      for(var i=0; i<play.Shape.shapes.length; i++) {
+      var i, name;
+      for(i=0; i<play.Shape.shapes.length; i++) {
         var shape = play.Shape.shapes[i];
         for(var k=0; k<play.Color.colors.length; k++) {
           var color = play.Color.colors[k];
-          var name = play.Piece.getTextureName(shape, color);
+          name = play.Piece.getTextureName(shape, color);
           util.addGenImg(this.game.cache, name, shape.texture, {
             'shape.style.fill': color.shade
           });
         }
       }
+      this.game.sounds = {
+        fail: this.game.add.audio('sounds/fail'),
+        success: this.game.add.audio('sounds/success'),
+        lose: this.game.add.audio('sounds/lose')
+      };
+      var names = Object.getOwnPropertyNames(this.game.sounds);
+      var sounds = []
+      for(i=0; i<names.length; i++) {
+        sounds.push(this.game.sounds[names[i]]);
+      }
+      this.game.sound.setDecodedCallback(sounds, function() {
+        this.game.soundsReady = true;
+      }.bind(this));
     },
     create: function create() {
       this.game.stage.backgroundColor = '#FFFFFF';

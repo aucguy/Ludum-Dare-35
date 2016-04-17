@@ -7,7 +7,10 @@ base.indexFunc = function indexFunc(state) {
     ['images/square',       'assets/images/square.svg',      'text'],
     ['images/circle',       'assets/images/circle.svg',      'text'],
     ['images/pentagon',     'assets/images/pentagon.svg',    'text'],
-    ['images/direction',    'assets/images/direction-up.svg','image']
+    ['images/direction',    'assets/images/direction-up.svg','image'],
+    ['sounds/fail',         'assets/sounds/fail.wav',        'audio'],
+    ['sounds/success',      'assets/sounds/success.wav',     'audio'],
+    ['sounds/lose',         'assets/sounds/lose.wav',        'audio']
   ];
   //#mode dev
   base.loadAssets(assets.concat([

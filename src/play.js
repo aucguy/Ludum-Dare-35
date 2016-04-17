@@ -10,7 +10,7 @@ base.registerModule('play', function() {
   var QUEUE_SPEED_ACCEL = 0.0000005;
   var QUEUE_SPEED_MIN = 3000;
   var SPAWN_RATE = 0.4;
-  var MISS_DAMAGE = 5;
+  var MISS_DAMAGE = 10;
   var RECOVER_SPEED = 0.5 * 2 * MISS_DAMAGE / QUEUE_SPEED; //rate at which health is regained
   var RING_RADIUS = 25;
   var INTRO_ANIM_TIME = 500;
@@ -86,7 +86,6 @@ base.registerModule('play', function() {
       this.scoreText = game.add.text(this.placements.score.x, this.placements.score.y, '', {
         font: '24px Arial', fill: '#000000'
       }, this);
-
 
       //intro animatino
       this.alpha = 0;
@@ -292,6 +291,7 @@ base.registerModule('play', function() {
       this.parent.parent.healthValue -= MISS_DAMAGE;
       this.parent.remove(this);
       animation.createParticleSprites(this.game, this);
+      this.game.playSound('fail');
     },
     doSuccess: function doSuccess() {
       this.parent.remove(this.arrow);
@@ -312,6 +312,7 @@ base.registerModule('play', function() {
       tween1.start();
       tween2.start();
       this.parent.parent.score++;
+      this.game.playSound('success');
     }
   });
   Piece.randomPiece = function randomPiece(game, x, y) {
