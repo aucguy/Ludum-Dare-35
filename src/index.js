@@ -2,6 +2,7 @@ var base = base || {};
 base.indexFunc = function indexFunc(state) {
   var assets = [
     ['gui/mainMenu',        'assets/gui/mainMenu.svg',       'text'],
+    ['gui/loseMenu',        'assets/gui/loseMenu.svg',       'text'],
     ['images/triangle',     'assets/images/triangle.svg',    'text'],
     ['images/square',       'assets/images/square.svg',      'text'],
     ['images/circle',       'assets/images/circle.svg',      'text'],

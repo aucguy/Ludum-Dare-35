@@ -76,6 +76,9 @@ base.registerModule('play', function() {
       this.healthValue = Math.min(this.healthValue + RECOVER_SPEED *
         this.game.time.elapsedSince(this.lastTick), 100);
       this.lastTick = this.game.time.elapsedSince(0);
+      if(this.healthValue < 0) {
+        this.game.state.start('loseMenu');
+      }
       this.queueLeft.spriteInCenter = null;
       this.queueRight.spriteInCenter = null;
       this.update$Group();

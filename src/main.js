@@ -35,6 +35,7 @@ base.registerModule('main', function() {
     init: function init() {
       this.state.add('boot', new BootState());
       this.state.add('mainMenu', new gui.Menu('gui/mainMenu'));
+      this.state.add('loseMenu', new gui.Menu('gui/loseMenu'));
       this.state.add('playState', new play.PlayState());
       this.state.start('boot');
     }
