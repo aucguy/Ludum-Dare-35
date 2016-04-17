@@ -34,6 +34,7 @@ base.registerModule('play', function() {
     var places = {
       //place to spawn pieces for left queue
       leftSpawn: [-50, -50], //topleft corner
+      rightSpawn: [width + 50, -50], //topright corner
       //where the pieces in the queue go to join
       queueTarget: [width / 2, height / 2], //screen center
       //center of the rings
@@ -67,7 +68,7 @@ base.registerModule('play', function() {
       this.speed = 5000;
 
       this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
-      this.queueRight = null; //line of shapes on the right
+      this.queueRight = new PieceQueue(game, this, Side.Right); //line of shapes on the right
       this.goals = new GoalGroup(game, this); //shapes to specify what goes where
       this.ring = new Ring(game, this, 100, 5, '#000000'); //ring for health
       this.add(this.ring);
@@ -153,12 +154,12 @@ base.registerModule('play', function() {
       this.unboundArrow = newArrow;
     },
     tryBindArrow: function tryBindArrow(piece) {
-      if(this.unboundArrow != null) {
+      if(this.unboundArrow != null && piece.arrow == null) {
         if(piece.arrow != null) {
           this.remove(piece.arrow);
         }
         piece.arrow = this.unboundArrow;
-        this.unboundArrow.piece = piece;
+        this.unboundArrow.onBound(piece);
         this.unboundArrow = null;
       }
     }
@@ -361,6 +362,13 @@ base.registerModule('play', function() {
         this.position.x = this.piece.position.x;
         this.position.y = this.piece.position.y;
       }
+    },
+    onBound: function onBound(piece) {
+      this.piece = piece;
+      piece.events.onRemovedFromGroup.add(this.onPieceRemoved.bind(this));
+    },
+    onPieceRemoved: function() {
+      this.parent.remove(this);
     }
   });
 
