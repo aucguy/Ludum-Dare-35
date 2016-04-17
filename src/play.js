@@ -4,7 +4,7 @@ base.registerModule('play', function() {
 
   var RING_FUZZ = 10;
   var MOVE_ZONE = 2;
-  var QUEUE_SPEED = 5000; //rate at which pieces are spawned
+  var QUEUE_SPEED = 3000; //rate at which pieces are spawned
   var MISS_DAMAGE = 5;
   var RECOVER_SPEED = 0.5 * 2 * MISS_DAMAGE / QUEUE_SPEED; //rate at which health is regained
   var rand = new Phaser.RandomDataGenerator();
@@ -205,6 +205,11 @@ base.registerModule('play', function() {
           dist < ring.totalRadius() + RING_FUZZ) {
         this.parent.tryBindArrow(this);
       } else if(dist < MOVE_ZONE && !this.redirected) { //hit center
+        this.parent.spriteInCenter = this;
+        var partner = this.parent.getOpposite().spriteInCenter;
+        if(partner != null && !this.mutated && !partner.mutated) {
+          this.mutate(partner);
+        }
         if(this.arrow != null) {
           var tween = this.game.add.tween(this);
           var pos = this.getGoal().position;
@@ -214,12 +219,6 @@ base.registerModule('play', function() {
           }, this.parent.speed);
           tween.start();
           this.redirected = true;
-
-          this.parent.spriteInCenter = this;
-          var partner = this.parent.getOpposite().spriteInCenter
-          if(partner != null && !this.mutated && !partner.mutated) {
-            this.mutate(partner);
-          }
         } else {
           this.parent.parent.healthValue -= MISS_DAMAGE;
           this.parent.remove(this);
