@@ -21,7 +21,8 @@ base.indexFunc = function indexFunc(state) {
     ['scripts/main',        'src/main.js',                  'script'],
     ['scripts/gui',         'src/gui.js',                   'script'],
     ['scripts/util',        'src/util.js',                  'script'],
-    ['scripts/play',        'src/play.js',                  'script']
+    ['scripts/play',        'src/play.js',                  'script'],
+    ['scripts/menu',        'src/menu.js',                  'script']
   ]));
   //#mode none
   //#mode rel

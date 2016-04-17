@@ -3,6 +3,7 @@ base.registerModule('main', function() {
   var gui = base.importModule('gui');
   var util = base.importModule('util');
   var play = base.importModule('play');
+  var menu = base.importModule('menu');
 
   /**
    * entry point
@@ -35,7 +36,8 @@ base.registerModule('main', function() {
     init: function init() {
       this.state.add('boot', new BootState());
       this.state.add('mainMenu', new gui.Menu('gui/mainMenu'));
-      this.state.add('loseMenu', new gui.Menu('gui/loseMenu'));
+      menu.LoseMenu.instance = new menu.LoseMenu();
+      this.state.add('loseMenu', menu.LoseMenu.instance);
       this.state.add('playState', new play.PlayState());
       this.state.start('boot');
     }

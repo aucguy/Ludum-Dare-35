@@ -1,5 +1,6 @@
 base.registerModule('play', function() {
   var util = base.importModule('util');
+  var menu = base.importModule('menu');
 
   var PIECES_IN_QUEUE = 5;
   var RING_FUZZ = 10;
@@ -36,6 +37,7 @@ base.registerModule('play', function() {
       queueTarget: [width / 2, height / 2], //screen center
       //center of the rings
       ringCenter: [width / 2, height / 2], //screen center
+      score: [width - 150, height - 25],
       //goal positions
       goalTriangle: [width / 2, goalMargin + pieceSize],
       goalSquare: [width - pieceSize - goalMargin, height / 2],
@@ -65,11 +67,15 @@ base.registerModule('play', function() {
       this.speed = QUEUE_SPEED; //speed at which to send pieces
       this.healthValue = 100; //when it hits zero game over. out of 100
       this.lastTick = game.time.elapsedSince(0);
+      this.score = 0;
 
       this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
       this.queueRight = new PieceQueue(game, this, Side.Right); //line of shapes on the right
       this.goals = new GoalGroup(game, this); //shapes to specify what goes where
       this.ring = new Ring(game, this, 100, 5, '#000000', '#888888'); //ring for health
+      this.scoreText = game.add.text(this.placements.score.x, this.placements.score.y, '', {
+        font: '24px Arial', fill: '#000000'
+      }, this);
       this.add(this.ring);
     },
     update: function update() {
@@ -77,8 +83,10 @@ base.registerModule('play', function() {
         this.game.time.elapsedSince(this.lastTick), 100);
       this.lastTick = this.game.time.elapsedSince(0);
       if(this.healthValue < 0) {
+        menu.LoseMenu.instance.score = this.score;
         this.game.state.start('loseMenu');
       }
+      this.scoreText.text = 'Score: ' + this.score;
       this.queueLeft.spriteInCenter = null;
       this.queueRight.spriteInCenter = null;
       this.update$Group();
@@ -221,6 +229,8 @@ base.registerModule('play', function() {
           this.getGoal().position.distance(this.position) < MOVE_ZONE) {
         if(this.getGoal().shape != this.shape)
           this.parent.parent.healthValue -= MISS_DAMAGE;
+        else
+          this.parent.parent.score++;
         this.parent.remove(this);
       }
     },
