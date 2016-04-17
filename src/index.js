@@ -1,11 +1,12 @@
 var base = base || {};
 base.indexFunc = function indexFunc(state) {
   var assets = [
-    ['gui/mainMenu',        'assets/gui/mainMenu.svg',      'text'],
+    ['gui/mainMenu',        'assets/gui/mainMenu.svg',       'text'],
     ['images/triangle',     'assets/images/triangle.svg',    'text'],
     ['images/square',       'assets/images/square.svg',      'text'],
     ['images/circle',       'assets/images/circle.svg',      'text'],
     ['images/pentagon',     'assets/images/pentagon.svg',    'text'],
+    ['images/direction',    'assets/images/direction-up.svg','image']
   ];
   //#mode dev
   base.loadAssets(assets.concat([

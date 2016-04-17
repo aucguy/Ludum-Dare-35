@@ -2,6 +2,7 @@ base.registerModule('play', function() {
   var util = base.importModule('util');
 
   var PIECES_IN_QUEUE = 5;
+  var RING_FUZZ = 10;
   var rand = new Phaser.RandomDataGenerator();
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
@@ -92,9 +93,9 @@ base.registerModule('play', function() {
       this.side = side; //which way the queue is facing
       this.onAddPiece = new Phaser.Signal(); //when piece added
       this.onTake = new Phaser.Signal(); //signal fired when a shape is taken
-
       this.onAddPiece.add(this.doAddPiece.bind(this));
       this.onAddPiece.dispatch();
+      this.unboundArrow = null; //arrow waiting to be attached
     },
     doAddPiece: function doAddPiece() {
       var piece = Piece.randomPiece(this.game, this.getSpawn().x, this.getSpawn().y);
@@ -114,11 +115,51 @@ base.registerModule('play', function() {
         case Side.Right: return this.parent.placements.rightSpawn;
       }
     },
-    /**
-     * returns the next shape in line for the center and moves everyone up
-     */
-    takeNext: function takeNext() {
-      //TODO
+    getArrowPos: function getArrowPos() {
+      //need to calculate intercept of queue line and the ring
+      var spawn = this.getSpawn()
+      var center = this.parent.placements.ringCenter;
+      var radius = this.parent.ring.radius + this.parent.ring.thickness / 2;
+      return util.lineCircleIntersect(spawn, center, radius);
+    },
+    update: function update() {
+      this.update$Group();
+      this.updateArrow();
+    },
+    updateArrow: function updateArrow() {
+      var newArrow = null;
+      if(this.unboundArrow != null &&
+          this.game.input.keyboard.isDown(this.unboundArrow.direction.getKey(this.side))) {
+        newArrow = this.unboundArrow;
+      }
+      else {
+        for(var i=0; i<Direction.directions.length; i++) {
+          var direction = Direction.directions[i];
+          if(this.game.input.keyboard.isDown(direction.getKey(this.side))) {
+            var pos = this.getArrowPos();
+            newArrow = new Arrow(this.game, direction, Math.round(pos.x),
+                Math.round(pos.y), null);
+            break;
+          }
+        }
+      }
+      if(this.unboundArrow != null && this.unboundArrow != this.newArrow) {
+        this.remove(this.unboundArrow);
+      }
+      if(newArrow != null) {
+        this.add(newArrow);
+      }
+      this.unboundArrow = newArrow;
+    },
+    tryBindArrow: function tryBindArrow(piece) {
+      if(this.unboundArrow != null) {
+        if(piece.arrow != null) {
+          this.remove(piece.arrow);
+        }
+        piece.arrow = this.unboundArrow;
+        this.unboundArrow.piece = piece;
+        this.unboundArrow = null;
+      }
     }
   });
 
@@ -128,7 +169,16 @@ base.registerModule('play', function() {
       this.constructor$Sprite(game, x, y, texture);
       this.shape = shape;
       this.color = color;
+      this.arrow = null;
       util.centerSprite(this);
+    },
+    update: function update() {
+      this.update$Sprite();
+      var ring = this.parent.parent.ring;
+      var dist = this.position.distance(ring.position);
+      if(ring.radius + RING_FUZZ < dist && dist < ring.totalRadius() + RING_FUZZ) {
+        this.parent.tryBindArrow(this);
+      }
     }
   });
   Piece.randomPiece = function randomPiece(game, x, y) {
@@ -259,6 +309,47 @@ base.registerModule('play', function() {
       return this.radius + this.thickness;
     }
   });
+
+  var Arrow = util.extend(Phaser.Sprite, 'Arrow', {
+    constructor: function Arrow(game, direction, x, y, piece) {
+      this.constructor$Sprite(game, x, y, 'images/direction');
+      this.direction = direction;
+      this.piece = piece;
+      this.angle = direction.angle
+      util.centerSprite(this);
+    },
+    update: function update() {
+      if(this.piece != null) {
+        this.position.x = this.piece.position.x;
+        this.position.y = this.piece.position.y;
+      }
+    }
+  });
+
+  var Direction = util.extend(Object, 'Direction', {
+    constructor: function Direction(name, angle, leftKey, rightKey) {
+      this.name = name;
+      this.angle = angle;
+      this.leftKey = Phaser.KeyCode[leftKey];
+      this.rightKey = Phaser.KeyCode[rightKey];
+      Direction.byLeftKey[this.leftKey] = this;
+      Direction.byRightKey[this.rightKey] = this;
+      Direction.directions.push(this);
+    },
+    getKey: function getKey(side) {
+      switch(side) {
+        case Side.Left: return this.leftKey;
+        case Side.Right: return this.rightKey;
+      }
+    }
+  });
+  Direction.byLeftKey = {};
+  Direction.byRightKey = {};
+  Direction.directions =[];
+  Direction.left = new Direction('left', -90, 'A', 'LEFT');
+  Direction.right = new Direction('right', 90, 'D', 'RIGHT');
+  Direction.up = new Direction('up', 0, 'W', 'UP');
+  Direction.down = new Direction('down', 180, 'S', 'DOWN');
 
   return {
     PlayState: PlayState,

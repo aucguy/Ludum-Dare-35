@@ -197,6 +197,14 @@ base.registerModule('util', function() {
     sprite.anchor.y = 0.5;
   }
 
+  //the line has one point in common with the circle's center
+  function lineCircleIntersect(line, center, radius) {
+    var vector = Phaser.Point.subtract(line, center).normalize();
+    vector = Phaser.Point.multiply(vector, new Phaser.Point(radius, radius));
+    vector = Phaser.Point.add(vector, center);
+    return vector;
+  }
+
   init();
 
   return {
@@ -212,6 +220,7 @@ base.registerModule('util', function() {
     createBitmap: createBitmap,
     clearBitmapCache: clearBitmapCache,
     normalWithAngle: normalWithAngle,
-    centerSprite: centerSprite
+    centerSprite: centerSprite,
+    lineCircleIntersect: lineCircleIntersect
   };
 });
