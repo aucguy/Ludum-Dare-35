@@ -178,18 +178,29 @@ base.registerModule('play', function() {
       this.update$Sprite();
       var ring = this.parent.parent.ring;
       var dist = this.position.distance(ring.position);
+
       if(ring.radius + RING_FUZZ < dist && dist < ring.totalRadius() + RING_FUZZ) {
         this.parent.tryBindArrow(this);
-      } else if(dist < MOVE_ZONE && this.arrow && !this.redirected) {
-        var tween = this.game.add.tween(this);
-        var pos = this.parent.parent.goals.getGoal(this.arrow.direction)
-        tween.to({
-          x: pos.x,
-          y: pos.y
-        }, this.parent.speed);
-        tween.start();
-        this.redirected = true;
+      } else if(dist < MOVE_ZONE && !this.redirected) {
+        if(this.arrow != null) {
+          var tween = this.game.add.tween(this);
+          var pos = this.getGoalPos();
+          tween.to({
+            x: pos.x,
+            y: pos.y
+          }, this.parent.speed);
+          tween.start();
+          this.redirected = true;
+        } else {
+          this.parent.remove(this);
+        }
+      } else if(this.redirected && this.arrow != null &&
+          this.getGoalPos().distance(this.position) < MOVE_ZONE) {
+        this.parent.remove(this);
       }
+    },
+    getGoalPos: function getGoalPos() {
+      return this.parent.parent.goals.getGoal(this.arrow.direction).position;
     }
   });
   Piece.randomPiece = function randomPiece(game, x, y) {
