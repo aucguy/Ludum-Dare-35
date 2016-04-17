@@ -1,6 +1,6 @@
 base.registerModule('gui', function() {
   var util = base.importModule('util');
-  
+
   var Menu = util.extend(Phaser.State, 'Menu', {
     constructor: function Menu(gui) {
       this.constructor$State(this);
@@ -80,12 +80,28 @@ base.registerModule('gui', function() {
     }
   });
 
+  var FADE_MOVE = 50;
+  var FADE_TIME = 500;
+
   var GuiContext = util.extend(Object, 'GuiContext', {
-    constructor: function(menu) {
+    constructor: function GuiContext(menu) {
       this.menu = menu;
     },
-    changeState: function(newState) {
+    changeState: function changeState(newState) {
       this.menu.game.state.start(newState);
+    },
+    fade: function fadeOut(isOut, isUp, newState) {
+      var direction = isUp[0] == 'u' || isUp[0] == 'U' ? -1 : 1;
+      var out = isOut[0] == 'o' || isOut[0] == 'O';
+      var tween = this.menu.game.add.tween(this.menu.sprite);
+      this.menu.sprite.alpha = out ? 1 : 0;
+      tween.to({
+        y: out ? this.menu.sprite.y + direction * FADE_MOVE : 0,
+        alpha: out ? 0 : 1
+      }, FADE_TIME);
+      this.menu.sprite.position.y -= out ? 0 : direction * FADE_MOVE;
+      tween.onComplete.add(this.changeState.bind(this, newState));
+      tween.start();
     }
   });
 

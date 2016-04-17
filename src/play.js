@@ -1,6 +1,7 @@
 base.registerModule('play', function() {
   var util = base.importModule('util');
   var menu = base.importModule('menu');
+  var animation = base.importModule('animation');
 
   var RING_FUZZ = 10;
   var MOVE_ZONE = 2;
@@ -12,6 +13,8 @@ base.registerModule('play', function() {
   var MISS_DAMAGE = 5;
   var RECOVER_SPEED = 0.5 * 2 * MISS_DAMAGE / QUEUE_SPEED; //rate at which health is regained
   var RING_RADIUS = 25;
+  var INTRO_ANIM_TIME = 500;
+  var SUCCESS_ANIM_TIME = 500;
   var rand = new Phaser.RandomDataGenerator([Date.now()]);
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
@@ -75,14 +78,23 @@ base.registerModule('play', function() {
       this.lastTick = game.time.elapsedSince(0);
       this.score = 0;
 
-      this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
-      this.queueRight = new PieceQueue(game, this, Side.Right); //line of shapes on the right
       this.goals = new GoalGroup(game, this); //shapes to specify what goes where
       this.ring = new Ring(game, this, RING_RADIUS, 5, '#000000', '#888888'); //ring for health
+      this.add(this.ring);
+      this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
+      this.queueRight = new PieceQueue(game, this, Side.Right); //line of shapes on the right
       this.scoreText = game.add.text(this.placements.score.x, this.placements.score.y, '', {
         font: '24px Arial', fill: '#000000'
       }, this);
-      this.add(this.ring);
+
+
+      //intro animatino
+      this.alpha = 0;
+      var tween = game.add.tween(this);
+      tween.to({
+        alpha: 1
+      }, INTRO_ANIM_TIME);
+      tween.start();
     },
     update: function update() {
       var deltaTime = this.game.time.elapsedSince(this.lastTick)
@@ -204,6 +216,10 @@ base.registerModule('play', function() {
       this.arrow = null;
       this.redirected = false;
       this.mutated = false;
+      this.onFail = new Phaser.Signal(); //when not directed toward right goal
+      this.onSuccess =  new Phaser.Signal(); //when directed toward right goal
+      this.onFail.add(this.doFail.bind(this));
+      this.onSuccess.add(this.doSuccess.bind(this));
       util.centerSprite(this);
     },
     update: function update() {
@@ -231,16 +247,15 @@ base.registerModule('play', function() {
           tween.start();
           this.redirected = true;
         } else {
-          this.parent.parent.healthValue -= MISS_DAMAGE;
-          this.parent.remove(this);
+          this.onFail.dispatch();
         }
       } else if(this.redirected && this.arrow != null && //hit goal
           this.getGoal().position.distance(this.position) < MOVE_ZONE) {
-        if(this.getGoal().shape != this.shape)
-          this.parent.parent.healthValue -= MISS_DAMAGE;
-        else
-          this.parent.parent.score++;
-        this.parent.remove(this);
+        if(this.getGoal().shape != this.shape) {
+          this.onFail.dispatch();
+        } else {
+          this.onSuccess.dispatch();
+        }
       }
     },
     getGoal: function getGoalPos() {
@@ -272,6 +287,31 @@ base.registerModule('play', function() {
     updateTexture: function updateTexture() {
       this.setTexture(util.getTextureFromCache(this.game,
           Piece.getTextureName(this.shape, this.color)));
+    },
+    doFail: function doFail() {
+      this.parent.parent.healthValue -= MISS_DAMAGE;
+      this.parent.remove(this);
+      animation.createParticleSprites(this.game, this);
+    },
+    doSuccess: function doSuccess() {
+      this.parent.remove(this.arrow);
+      this.arrow = null;
+
+      var tween1 = this.game.add.tween(this.scale);
+      tween1.to({
+        x: 1.5,
+        y: 1.5
+      }, SUCCESS_ANIM_TIME);
+
+      var tween2 = this.game.add.tween(this);
+      tween2.to({
+        alpha: 0
+      }, SUCCESS_ANIM_TIME);
+      tween2.onComplete.add(this.parent.remove.bind(this.parent, this));
+
+      tween1.start();
+      tween2.start();
+      this.parent.parent.score++;
     }
   });
   Piece.randomPiece = function randomPiece(game, x, y) {

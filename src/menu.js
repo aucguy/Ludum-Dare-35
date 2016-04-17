@@ -12,6 +12,7 @@ base.registerModule('menu', function() {
       this.canvg.Definitions.score.children[0].children[0].text =
           'Score: ' + this.score;
       this.canvg.draw();
+      this.context.fade('in', 'down', 'play');
     }
   });
   LoseMenu.instance = null;

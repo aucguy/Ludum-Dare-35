@@ -25,8 +25,8 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.6569084"
-     inkscape:cx="148.85308"
+     inkscape:zoom="0.98048053"
+     inkscape:cx="32.72026"
      inkscape:cy="160.22788"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -61,7 +61,7 @@
        height="121.89122"
        x="152.61913"
        y="781.56592"
-       onclick="changeState playState" />
+       onclick="fade out up playState" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:6.08471346px;line-height:161.00000143%;font-family:Sans;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
