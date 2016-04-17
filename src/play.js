@@ -4,10 +4,15 @@ base.registerModule('play', function() {
 
   var RING_FUZZ = 10;
   var MOVE_ZONE = 2;
-  var QUEUE_SPEED = 3000; //rate at which pieces are spawned
+  var QUEUE_SPEED = 15000; //rate at which pieces are spawned
+  var QUEUE_SPEED_VEL = 0.1;
+  var QUEUE_SPEED_ACCEL = 0.0000005;
+  var QUEUE_SPEED_MIN = 3000;
+  var SPAWN_RATE = 0.4;
   var MISS_DAMAGE = 5;
   var RECOVER_SPEED = 0.5 * 2 * MISS_DAMAGE / QUEUE_SPEED; //rate at which health is regained
-  var rand = new Phaser.RandomDataGenerator();
+  var RING_RADIUS = 25;
+  var rand = new Phaser.RandomDataGenerator([Date.now()]);
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
     constructor: function PlayState() {
@@ -63,7 +68,9 @@ base.registerModule('play', function() {
       //what goes where
       this.placements = makePlacements(game, game.scale.width, game.scale.height);
 
-      this.speed = QUEUE_SPEED; //speed at which to send pieces
+      this.spawnRate = SPAWN_RATE; //speed at which to send pieces
+      this.queueSpeed = QUEUE_SPEED;
+      this.queueVel = QUEUE_SPEED_VEL;
       this.healthValue = 100; //when it hits zero game over. out of 100
       this.lastTick = game.time.elapsedSince(0);
       this.score = 0;
@@ -71,15 +78,19 @@ base.registerModule('play', function() {
       this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
       this.queueRight = new PieceQueue(game, this, Side.Right); //line of shapes on the right
       this.goals = new GoalGroup(game, this); //shapes to specify what goes where
-      this.ring = new Ring(game, this, 100, 5, '#000000', '#888888'); //ring for health
+      this.ring = new Ring(game, this, RING_RADIUS, 5, '#000000', '#888888'); //ring for health
       this.scoreText = game.add.text(this.placements.score.x, this.placements.score.y, '', {
         font: '24px Arial', fill: '#000000'
       }, this);
       this.add(this.ring);
     },
     update: function update() {
+      var deltaTime = this.game.time.elapsedSince(this.lastTick)
       this.healthValue = Math.min(this.healthValue + RECOVER_SPEED *
-        this.game.time.elapsedSince(this.lastTick), 100);
+        deltaTime, 100);
+      this.queueVel = Math.max(this.queueVel - QUEUE_SPEED_ACCEL * deltaTime, 0);
+      this.queueSpeed = Math.max(this.queueSpeed - this.queueVel * deltaTime,
+          QUEUE_SPEED_MIN);
       this.lastTick = this.game.time.elapsedSince(0);
       if(this.healthValue < 0) {
         menu.LoseMenu.instance.score = this.score;
@@ -95,7 +106,7 @@ base.registerModule('play', function() {
   var Side = {
     Left: 0,
     Right: 1
-  }
+  };
 
   /**
    * holds shapes that will be played
@@ -118,10 +129,10 @@ base.registerModule('play', function() {
       tween.to({
         x: this.parent.placements.queueTarget.x,
         y: this.parent.placements.queueTarget.y
-      }, this.parent.speed);
+      }, this.parent.queueSpeed);
       tween.start();
       this.add(piece);
-      this.game.time.events.add(this.parent.speed,
+      this.game.time.events.add(this.parent.spawnRate * this.parent.queueSpeed,
           this.onAddPiece.dispatch, this.onAddPiece);
     },
     getSpawn: function getSpawn() {
@@ -216,7 +227,7 @@ base.registerModule('play', function() {
           tween.to({
             x: pos.x,
             y: pos.y
-          }, this.parent.speed);
+          }, this.parent.queueSpeed);
           tween.start();
           this.redirected = true;
         } else {
