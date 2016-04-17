@@ -4,22 +4,19 @@ base.registerModule('play', function() {
   var PIECES_IN_QUEUE = 5;
   var RING_FUZZ = 10;
   var MOVE_ZONE = 5;
+  var QUEUE_SPEED = 5000; //rate at which pieces are spawned
+  var MISS_DAMAGE = 5;
+  var RECOVER_SPEED = 0.5 * 2 * MISS_DAMAGE / (QUEUE_SPEED / PIECES_IN_QUEUE); //rate at which health is regained
   var rand = new Phaser.RandomDataGenerator();
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
     constructor: function PlayState() {
       this.playGame = null;
     },
-
     create: function create() {
       this.playGame = new PlayGame(this.game);
       this.game.world.add(this.playGame);
     },
-
-    update: function update() {
-      //this.playGame.update();
-    },
-
     shutdown: function shutdown() {
       util.clearBitmapCache();
     }
@@ -64,16 +61,21 @@ base.registerModule('play', function() {
       this.constructor$Group(game);
       //what goes where
       this.placements = makePlacements(game, game.scale.width, game.scale.height);
-      //speed at which to send pieces
-      this.speed = 5000;
+
+      this.speed = QUEUE_SPEED; //speed at which to send pieces
+      this.healthValue = 100; //when it hits zero game over. out of 100
+      this.lastTick = game.time.elapsedSince(0);
 
       this.queueLeft = new PieceQueue(game, this, Side.Left); //line of shapes on the left
       this.queueRight = new PieceQueue(game, this, Side.Right); //line of shapes on the right
       this.goals = new GoalGroup(game, this); //shapes to specify what goes where
-      this.ring = new Ring(game, this, 100, 5, '#000000'); //ring for health
+      this.ring = new Ring(game, this, 100, 5, '#000000', '#888888'); //ring for health
       this.add(this.ring);
     },
     update: function update() {
+      this.healthValue = Math.min(this.healthValue + RECOVER_SPEED *
+        this.game.time.elapsedSince(this.lastTick), 100);
+      this.lastTick = this.game.time.elapsedSince(0);
       this.queueLeft.spriteInCenter = null;
       this.queueRight.spriteInCenter = null;
       this.update$Group();
@@ -195,7 +197,7 @@ base.registerModule('play', function() {
       } else if(dist < MOVE_ZONE && !this.redirected) { //hit center
         if(this.arrow != null) {
           var tween = this.game.add.tween(this);
-          var pos = this.getGoalPos();
+          var pos = this.getGoal().position;
           tween.to({
             x: pos.x,
             y: pos.y
@@ -209,15 +211,19 @@ base.registerModule('play', function() {
             this.mutate(partner);
           }
         } else {
+          this.parent.parent.healthValue -= MISS_DAMAGE;
           this.parent.remove(this);
         }
       } else if(this.redirected && this.arrow != null && //hit goal
-          this.getGoalPos().distance(this.position) < MOVE_ZONE) {
+          this.getGoal().position.distance(this.position) < MOVE_ZONE) {
+        if(this.getGoal().shape != this.shape)
+          this.parent.parent.healthValue -= MISS_DAMAGE;
         this.parent.remove(this);
       }
     },
-    getGoalPos: function getGoalPos() {
-      return this.parent.parent.goals.getGoal(this.arrow.direction).position;
+    getGoal: function getGoalPos() {
+      if(this.arrow == null) return null;
+      return this.parent.parent.goals.getGoal(this.arrow.direction);
     },
     mutate: function mutate(partner) {
       this.mutated = true;
@@ -354,7 +360,7 @@ base.registerModule('play', function() {
   };
 
   var Ring = util.extend(Phaser.Sprite, 'Ring', {
-    constructor: function Ring(game, parent, radius, thickness, color) {
+    constructor: function Ring(game, parent, radius, thickness, colorFull, colorEmpty) {
       var outer = radius + thickness;
       this.bitmap = util.createBitmap(game, 2 * outer, 2 * outer);
       this.constructor$Sprite(game, parent.placements.ringCenter.x,
@@ -362,25 +368,32 @@ base.registerModule('play', function() {
       util.centerSprite(this);
       this.radius = radius;
       this.thickness = thickness;
-      this.color = color;
+      this.colorFull = colorFull;
+      this.colorEmpty = colorEmpty
     },
     update: function update() {
       var context = this.bitmap.context;
-      var angle = this.game.math.degToRad(360);
-
-      context.fillStyle = this.color;
-      context.strokeStyle = this.color;
-
+      context.clearRect(0, 0, this.bitmap.canvas.width, this.bitmap.canvas.height);
+      var angle = 2 * Math.PI * (this.parent.healthValue / 100);
+      this.drawArc(0, angle, this.colorFull, true);
+      if(this.parent.healthValue != 100)
+        this.drawArc(angle, 0, this.colorEmpty, false);
+      this.bitmap.dirty = true;
+    },
+    drawArc: function drawArc(startAngle, stopAngle, color, shouldFill) {
+      var context = this.bitmap.context;
+      context.fillStyle = context.strokeStyle = color;
+      context.save();
       context.beginPath();
-      context.arc(this.center().x, this.center().y, this.radius, 0, angle);
+      context.arc(this.center().x, this.center().y, this.radius, startAngle, stopAngle);
 
-      var end = this.getEndPoint(angle);
+      var end = this.getEndPoint(stopAngle);
       context.lineTo(end.x, end.y);
 
-      context.arc(this.center().x, this.center().y, this.totalRadius(), angle, 0, true);
+      context.arc(this.center().x, this.center().y, this.totalRadius(), stopAngle, startAngle, true);
       context.closePath();
 
-      context.fill();
+      if(shouldFill) context.fill();
       context.stroke();
       context.restore();
     },
@@ -404,7 +417,7 @@ base.registerModule('play', function() {
       this.constructor$Sprite(game, x, y, 'images/direction');
       this.direction = direction;
       this.piece = piece;
-      this.angle = direction.angle
+      this.angle = direction.angle;
       util.centerSprite(this);
     },
     update: function update() {
