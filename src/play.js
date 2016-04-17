@@ -73,11 +73,11 @@ base.registerModule('play', function() {
       this.ring = new Ring(game, this, 100, 5, '#000000'); //ring for health
       this.add(this.ring);
     },
-    /**
-     * send shapes to their destination
-     */
-    sendShapes: function sendShapes() {
-    },
+    update: function update() {
+      this.queueLeft.spriteInCenter = null;
+      this.queueRight.spriteInCenter = null;
+      this.update$Group();
+    }
   });
 
   var Side = {
@@ -98,6 +98,7 @@ base.registerModule('play', function() {
       this.onAddPiece.add(this.doAddPiece.bind(this));
       this.onAddPiece.dispatch();
       this.unboundArrow = null; //arrow waiting to be attached
+      this.spriteInCenter = null; //sprite in the center to be mutated
     },
     doAddPiece: function doAddPiece() {
       var piece = Piece.randomPiece(this.game, this.getSpawn().x, this.getSpawn().y);
@@ -162,6 +163,12 @@ base.registerModule('play', function() {
         this.unboundArrow.onBound(piece);
         this.unboundArrow = null;
       }
+    },
+    getOpposite: function getOpposite() {
+      switch(this.side) {
+        case Side.Left: return this.parent.queueRight;
+        case Side.Right: return this.parent.queueLeft;
+      }
     }
   });
 
@@ -173,6 +180,7 @@ base.registerModule('play', function() {
       this.color = color;
       this.arrow = null;
       this.redirected = false;
+      this.mutated = false;
       util.centerSprite(this);
     },
     update: function update() {
@@ -180,9 +188,11 @@ base.registerModule('play', function() {
       var ring = this.parent.parent.ring;
       var dist = this.position.distance(ring.position);
 
-      if(ring.radius + RING_FUZZ < dist && dist < ring.totalRadius() + RING_FUZZ) {
+      // hit ring
+      if(!this.redirected && ring.radius + RING_FUZZ < dist &&
+          dist < ring.totalRadius() + RING_FUZZ) {
         this.parent.tryBindArrow(this);
-      } else if(dist < MOVE_ZONE && !this.redirected) {
+      } else if(dist < MOVE_ZONE && !this.redirected) { //hit center
         if(this.arrow != null) {
           var tween = this.game.add.tween(this);
           var pos = this.getGoalPos();
@@ -192,16 +202,48 @@ base.registerModule('play', function() {
           }, this.parent.speed);
           tween.start();
           this.redirected = true;
+
+          this.parent.spriteInCenter = this;
+          var partner = this.parent.getOpposite().spriteInCenter
+          if(partner != null && !this.mutated && !partner.mutated) {
+            this.mutate(partner);
+          }
         } else {
           this.parent.remove(this);
         }
-      } else if(this.redirected && this.arrow != null &&
+      } else if(this.redirected && this.arrow != null && //hit goal
           this.getGoalPos().distance(this.position) < MOVE_ZONE) {
         this.parent.remove(this);
       }
     },
     getGoalPos: function getGoalPos() {
       return this.parent.parent.goals.getGoal(this.arrow.direction).position;
+    },
+    mutate: function mutate(partner) {
+      this.mutated = true;
+      partner.mutated = true;
+      if(this.shape == partner.shape) {
+        if(this.color == partner.color) {
+          this.shape = this.shape.next.next;
+          partner.shape = partner.shape.next.next;
+        } else {
+          this.shape = this.shape.next;
+          partner.shape = partner.shape.next;
+        }
+      } else {
+        if(this.color == partner.color) {
+          this.shape = this.shape.prev;
+          partner.shape = partner.shape.prev;
+        } else {
+          return;
+        }
+      }
+      this.updateTexture();
+      partner.updateTexture();
+    },
+    updateTexture: function updateTexture() {
+      this.setTexture(util.getTextureFromCache(this.game,
+          Piece.getTextureName(this.shape, this.color)));
     }
   });
   Piece.randomPiece = function randomPiece(game, x, y) {
@@ -215,6 +257,8 @@ base.registerModule('play', function() {
     constructor: function Shape(name, texture) {
       this.name = name;
       this.texture = texture;
+      this.next = null;
+      this.prev = null
       Shape.shapes.push(this);
     }
   });
@@ -223,6 +267,12 @@ base.registerModule('play', function() {
   Shape.square = new Shape('square', 'images/square');
   Shape.circle = new Shape('circle', 'images/circle');
   Shape.pentagon = new Shape('pentagon', 'images/pentagon');
+  for(var i=0; i<Shape.shapes.length; i++) {
+    var shape = Shape.shapes[i];
+    shape.next = Shape.shapes[(i + 1) % Shape.shapes.length];
+    shape.prev = Shape.shapes[i == 0 ? Shape.shapes.length - 1 :
+        (i - 1) % Shape.shapes.length];
+  }
 
   Shape.randomShape = function randomShape() {
     return rand.pick(Shape.shapes);
