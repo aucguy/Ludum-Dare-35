@@ -2,6 +2,12 @@ base.registerModule('play', function() {
   var util = base.importModule('util');
   var menu = base.importModule('menu');
   var animation = base.importModule('animation');
+  var playUtil = base.importModule('playUtil');
+
+  var rand = playUtil.rand;
+  var Shape = playUtil.Shape;
+  var Color = playUtil.Color;
+  var getTextureName = playUtil.getTextureName;
 
   var RING_FUZZ = 10;
   var MOVE_ZONE = 2;
@@ -15,7 +21,6 @@ base.registerModule('play', function() {
   var RING_RADIUS = 25;
   var INTRO_ANIM_TIME = 500;
   var SUCCESS_ANIM_TIME = 500;
-  var rand = new Phaser.RandomDataGenerator([Date.now()]);
 
   var PlayState = util.extend(Phaser.State, 'PlayState', {
     constructor: function PlayState() {
@@ -78,6 +83,8 @@ base.registerModule('play', function() {
       this.lastTick = game.time.elapsedSince(0);
       this.score = 0;
 
+      this.particles = new menu.ParticleGroup(game);
+      this.add(this.particles);
       this.goals = new GoalGroup(game, this); //shapes to specify what goes where
       this.ring = new Ring(game, this, RING_RADIUS, 5, '#000000', '#888888'); //ring for health
       this.add(this.ring);
@@ -87,7 +94,7 @@ base.registerModule('play', function() {
         font: '24px Arial', fill: '#000000'
       }, this);
 
-      //intro animatino
+      //intro animation
       this.alpha = 0;
       var tween = game.add.tween(this);
       tween.to({
@@ -318,50 +325,7 @@ base.registerModule('play', function() {
   Piece.randomPiece = function randomPiece(game, x, y) {
     return new Piece(game, x, y, Shape.randomShape(), Color.randomColor());
   };
-  Piece.getTextureName = function getTextureName(shape, color) {
-    return 'piece-' + shape.name + '-' + color.name;
-  }
-
-  var Shape = util.extend(Object, 'Shape', {
-    constructor: function Shape(name, texture) {
-      this.name = name;
-      this.texture = texture;
-      this.next = null;
-      this.prev = null
-      Shape.shapes.push(this);
-    }
-  });
-  Shape.shapes = [];
-  Shape.triangle = new Shape('triangle', 'images/triangle');
-  Shape.square = new Shape('square', 'images/square');
-  Shape.circle = new Shape('circle', 'images/circle');
-  Shape.pentagon = new Shape('pentagon', 'images/pentagon');
-  for(var i=0; i<Shape.shapes.length; i++) {
-    var shape = Shape.shapes[i];
-    shape.next = Shape.shapes[(i + 1) % Shape.shapes.length];
-    shape.prev = Shape.shapes[i == 0 ? Shape.shapes.length - 1 :
-        (i - 1) % Shape.shapes.length];
-  }
-
-  Shape.randomShape = function randomShape() {
-    return rand.pick(Shape.shapes);
-  }
-
-  var Color = util.extend(Object, 'Color', {
-    constructor: function Color(name, shade) {
-      this.name = name;
-      this.shade = shade;
-    }
-  });
-  Color.colors = [
-    new Color('red', '#FF0000'),
-    new Color('blue', '#0000FF'),
-    new Color('yellow', '#FFFF00'),
-    new Color('green', '#00FF00')
-  ]
-  Color.randomColor = function randomColor() {
-    return rand.pick(Color.colors)
-  }
+  Piece.getTextureName = getTextureName;
 
   /**
    * group for goals
@@ -527,6 +491,7 @@ base.registerModule('play', function() {
     PlayState: PlayState,
     Shape: Shape,
     Color: Color,
-    Piece: Piece
+    Piece: Piece,
+    rand: rand
   }
 });

@@ -37,7 +37,7 @@ base.registerModule('main', function() {
 
     init: function init() {
       this.state.add('boot', new BootState());
-      this.state.add('mainMenu', new gui.Menu('gui/mainMenu'));
+      this.state.add('mainMenu', new menu.GameMenu('gui/mainMenu'));
       menu.LoseMenu.instance = new menu.LoseMenu();
       this.state.add('loseMenu', menu.LoseMenu.instance);
       this.state.add('playState', new play.PlayState());
