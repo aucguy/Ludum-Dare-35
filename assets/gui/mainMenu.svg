@@ -7,7 +7,6 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="600"
@@ -18,8 +17,7 @@
    inkscape:version="0.91 r13725"
    sodipodi:docname="mainMenu.svg">
   <defs
-     id="defs4">
-  </defs>
+     id="defs4" />
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -27,11 +25,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.3208093"
-     inkscape:cx="53.22738"
+     inkscape:zoom="0.48555109"
+     inkscape:cx="-83.38494"
      inkscape:cy="327.88017"
      inkscape:document-units="px"
-     inkscape:current-layer="g5062"
+     inkscape:current-layer="g4262"
      showgrid="false"
      inkscape:window-width="1366"
      inkscape:window-height="706"
@@ -218,7 +216,7 @@
        id="g4262">
       <g
          id="g4257"
-         transform="translate(-56.25059,-46.875491)">
+         transform="translate(135.28437,-1.5661474)">
         <rect
            style="opacity:1;fill:#cacaca;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.63525701;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
            id="rect4136"
@@ -243,56 +241,6 @@
              y="1019.5996"
              style="font-size:40.00000381px;fill:#000000;fill-opacity:1">Play&gt;&gt;</tspan></text>
       </g>
-      <g
-         id="g4274"
-         transform="translate(-69.554389,11.887477)">
-        <rect
-           style="opacity:1;fill:#cacaca;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.9092474;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-           id="rect4136-3"
-           width="231.28926"
-           height="50.304214"
-           x="207.32751"
-           y="935.33423"
-           onclick=""
-           rx="19.723042"
-           ry="8.4268398" />
-        <text
-           xml:space="preserve"
-           style="font-style:normal;font-weight:normal;font-size:40.00000381px;line-height:161.00000143%;font-family:Sans;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-           x="310.75476"
-           y="1021.8849"
-           id="text4138-2"
-           sodipodi:linespacing="161%"
-           transform="scale(1.0506476,0.95179392)"><tspan
-             sodipodi:role="line"
-             id="tspan4140-3"
-             x="310.75476"
-             y="1021.8849"
-             style="font-size:40.00000381px;fill:#000000;fill-opacity:1">Tutorial&gt;&gt;</tspan></text>
-      </g>
-      <rect
-         ry="8.4332438"
-         rx="18.926849"
-         onclick=""
-         y="995.95312"
-         x="368.13998"
-         height="50.342445"
-         width="221.95239"
-         id="rect4136-3-5"
-         style="opacity:1;fill:#cacaca;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.87102389;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-      <text
-         transform="scale(1.0506476,0.95179392)"
-         sodipodi:linespacing="161%"
-         id="text4138-2-7"
-         y="1085.594"
-         x="457.58704"
-         style="font-style:normal;font-weight:normal;font-size:40.00000381px;line-height:161.00000143%;font-family:Sans;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           style="font-size:40.00000381px;fill:#000000;fill-opacity:1"
-           y="1085.594"
-           x="457.58704"
-           id="tspan4140-3-8"
-           sodipodi:role="line">Credits&gt;&gt;</tspan></text>
       <rect
          id="rect6579"
          y="683.68201"
