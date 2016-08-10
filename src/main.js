@@ -83,6 +83,17 @@ base.registerModule('main', function() {
     create: function create() {
       this.game.stage.backgroundColor = '#FFFFFF';
       this.game.state.start('mainMenu');
+      var arrowKeys = [
+        Phaser.KeyCode.LEFT,
+        Phaser.KeyCode.RIGHT,
+        Phaser.KeyCode.UP,
+        Phaser.KeyCode.DOWN
+      ];
+      base.addEventListener(window, "keydown", function(event) {
+        if(arrowKeys.indexOf(event.keyCode) != -1) {
+          event.preventDefault();
+        }
+      });
     }
   });
 
