@@ -4,6 +4,7 @@ base.registerModule('main', function() {
   var util = base.importModule('util');
   var play = base.importModule('play');
   var menu = base.importModule('menu');
+  var playUtil = base.importModule('playUtil');
 
   /**
    * entry point
@@ -60,7 +61,7 @@ base.registerModule('main', function() {
         var shape = play.Shape.shapes[i];
         for(var k=0; k<play.Color.colors.length; k++) {
           var color = play.Color.colors[k];
-          name = play.Piece.getTextureName(shape, color);
+          name = playUtil.getTextureName(shape, color);
           util.addGenImg(this.game.cache, name, shape.texture, {
             'shape.style.fill': color.shade
           });
@@ -72,7 +73,7 @@ base.registerModule('main', function() {
         lose: this.game.add.audio('sounds/lose')
       };
       var names = Object.getOwnPropertyNames(this.game.sounds);
-      var sounds = []
+      var sounds = [];
       for(i=0; i<names.length; i++) {
         sounds.push(this.game.sounds[names[i]]);
       }

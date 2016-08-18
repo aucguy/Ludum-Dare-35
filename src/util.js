@@ -37,7 +37,7 @@ base.registerModule('util', function() {
             var extName = name + "$" + parent.prototype.__name__;
             Object.defineProperty(proto, extName, value);
           }
-      }
+       }
     }
 
     proto.__name__ = className; // needed for child classes
@@ -45,14 +45,68 @@ base.registerModule('util', function() {
     names = Object.getOwnPropertyNames(sub);
     for (i=0; i<names.length; i++) { // copying new attributes
       name = names[i];
-      proto[name] = sub[name];
+      value = sub[name];
+      if(value.__factoryAttr__) {
+        value(proto, name);
+      } else {
+        proto[name] = value;
+      }
     }
 
-    if(!proto.hasOwnProperty('constructor'))
-      proto.constructor = NOP;
+    if(!proto.hasOwnProperty('constructor')) {
+      proto.constructor = function() {};
+    }
+
+    if(proto.constructor.create === undefined) {
+      proto.constructor.create = function() {
+        return create(proto.constructor, undefined, arguments);
+      };
+    }
 
     proto.constructor.prototype = proto; // setting constructor prototype
     return proto.constructor;
+  }
+
+  function create(constructor, context, args) {
+    var obj = Object.create(constructor.prototype);
+    obj.context = context;
+    constructor.apply(obj, args);
+    return obj;
+  }
+  var create_ = create;
+
+  var Contextual = extend(Object, 'Contextual', {
+    constructor: function Contextual() {
+      if(this.context === undefined) {
+        this.context = {};
+      }
+    },
+    create: function create(constructor) {
+      return create_(constructor, Object.create(this.context),
+          Array.prototype.slice.call(arguments, 1));
+    }
+  });
+
+  function contextAttr(proto, name) {
+    Object.defineProperty(proto, name, {
+      get: new Function("return this.context." + name + ";"),
+      set: new Function("x", "this.context." + name + "=x")
+    });
+  }
+  contextAttr.__factoryAttr__ = true;
+
+  function contextValue(value) {
+    function factory(proto, name) {
+      proto[name] = value;
+    }
+    factory.__factoryAttr__ = true;
+    return factory;
+  }
+
+  function instance(factory) {
+    return {
+      create: factory
+    };
   }
 
   /**
@@ -129,7 +183,7 @@ base.registerModule('util', function() {
         var entry = {
           key: key,
           value: null
-        }
+        };
         this.entries.push(entry);
         return entry;
       }
@@ -143,7 +197,7 @@ base.registerModule('util', function() {
       this.entry(key, true).value = value;
     },
     contains: function contains(key) {
-      return this.entry(key, false) != null;
+      return this.entry(key, false) !== null;
     }
   });
 
@@ -158,13 +212,13 @@ base.registerModule('util', function() {
       var parts = name.split('.');
 
       var obj = svg.getElementById(parts[0]);
-      if(obj == null) continue
+      if(obj === null) continue;
 
       for(var k=1; k<parts.length-1; k++) {
         obj = obj[parts[k]];
-        if(obj == null) break;
+        if(obj === null) break;
       }
-      if(obj == null) continue;
+      if(obj === null) continue;
       obj[parts[parts.length-1]] = value;
     }
     canvg(target, svg);
@@ -209,6 +263,10 @@ base.registerModule('util', function() {
 
   return {
     extend: extend,
+    Contextual: Contextual,
+    contextAttr: contextAttr,
+    contextValue: contextValue,
+    instance: instance,
     createCanvas: createCanvas,
     xmlParser: xmlParser,
     getGame: getGame,
