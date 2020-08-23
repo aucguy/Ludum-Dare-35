@@ -1,0 +1,43 @@
+{
+  "items": [{
+    "name": "gui/mainMenu",
+    "url": "assets/gui/mainMenu.svg",
+    "type": "text"
+  }, {
+    "name": "gui/loseMenu",
+    "url": "assets/gui/loseMenu.svg",
+    "type": "text"
+  }, {
+    "name": "images/triangle",
+    "url": "assets/images/triangle.svg",
+    "type": "text"
+  }, {
+    "name": "images/square",
+    "url": "assets/images/square.svg",
+    "type": "text"
+  }, {
+    "name": "images/circle",
+    "url": "assets/images/circle.svg",
+    "type": "text"
+  }, {
+    "name": "images/pentagon",
+    "url": "assets/images/pentagon.svg",
+    "type": "text"
+  }, {
+    "name": "images/direction",
+    "url": "assets/images/direction-up.svg",
+    "type": "image"
+  }, {
+    "name": "sounds/fail",
+    "url": "assets/sounds/fail.wav",
+    "type": "audio"
+  }, {
+    "name": "sounds/success",
+    "url": "assets/sounds/success.wav",
+    "type": "audio"
+  }, {
+    "name": "sounds/lose",
+    "url": "assets/sounds/lose.wav",
+    "type": "audio"
+  }]
+}
